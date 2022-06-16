@@ -3,7 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once APPPATH."libraries/Libcurl.php";
 
-class Site extends CI_Controller {
+class Site extends MY_Controller {
 
 	protected $__SUPERADMIN = [
 		'sa',
@@ -15,29 +15,129 @@ class Site extends CI_Controller {
 	{
 		if ( !$this->hasLogin() ) redirect("site/login");
 
-		$data['header'] = 'inbound';
-		$data['breadcumb'] = 'Inbound';
-		$data['js']		= [
+		$this->fragment['header'] = 'inbound';
+		$this->fragment['breadcumb'] = 'Inbound';
+		$this->fragment['js']		= [
 			base_url('assets/js/pages/inbound.js')
 		];
 
-		$log = $this->session->userdata('idocs-itdev');
-		$log_user = $log->log_user;
-		$check_is_admin = $this->sitemodel->view('tab_admin', '*', ['nip' => $log_user]);
-		$data['is_admin'] = ($check_is_admin != '0') ? true : false;
-		$check_is_superadmin = $this->sitemodel->view('tab_admin', '*', ['nip' => $log_user, 'level' => '2']);
-		$data['is_superadmin'] = ($check_is_superadmin != '0') ? true : false;
-
-        $this->load->library('guzzle');
-		$department = $this->guzzle->guzzle_HRIS('department/get');
-		$data_department = json_decode($department);
-		$data['dept'] = $data_department->result;
-		$data['log_dept'] = $log->log_dept;
-		$data['log_user'] = $log->log_user;
-		$data['log_name'] = $log->log_name;
+		$this->fragment['category'] = $this->sitemodel->view('tab_category', '*');
 		
-		$data['pagename'] = 'pages/view_inbound';
-		$this->load->view('layout/main_site', $data);
+		$this->fragment['pagename'] = 'pages/view_inbound';
+		// echo json_encode($this->fragment);die;
+		$this->load->view('layout/main_site', $this->fragment);
+	}
+
+	function search_emp()
+	{
+		if ( !$this->hasLogin() ){$this->response['msg'] = "Session expired, Please refresh your browser.";echo json_encode($this->response);exit;}
+		$term = $this->input->get("term");
+		$post = [
+			"src"	=> strtoupper($term),
+		];
+		$curl = new Libcurl("employee", "search-admin");
+		$data = $curl->__pages($post);
+		echo json_encode($data);
+		exit;
+	}
+
+	function get_dept()
+	{
+		$res = [];
+		$term = $this->input->get("term");
+		$post = [
+			'dept_name' => strtoupper($term),
+		];
+		$this->load->library('guzzle');
+		$department = $this->guzzle->guzzle_HRIS('department/get', $post);
+		$data_department = json_decode($department);
+
+		if ( $data_department->status == 'success' ) {
+
+			for ( $i = 0 ; $i < sizeof($data_department->result); $i++) { 
+				$temp = [];
+				$temp['id'] = $data_department->result[$i]->DEPT_ID;
+				$temp['text'] = $data_department->result[$i]->DEPT_NAME;
+				$temp['recipient_name'] = $data_department->result[$i]->DEPT_NAME;
+				$res[] = $temp;
+			}
+
+		}
+
+		echo json_encode($res);
+		exit;
+	}
+
+	function ajax_validation()
+	{
+		// echo json_encode($this->input->post());die;
+		/*** Check Session ***/
+		if ( !$this->hasLogin() ){$this->response['msg'] = "Session expired, Please refresh your browser.";echo json_encode($this->response);exit;}
+		/*** Check POST or GET ***/
+		if ( !$_POST ){$this->response['msg'] = "Invalid parameters.";echo json_encode($this->response);exit;}
+		// PARAMS
+		$category_id 		= $this->input->post('category_id');
+		$ticket_description = $this->input->post('ticket_description');
+		$sender_dept 		= $this->input->post('sender_dept');
+		$sender_name 		= strtoupper($this->input->post('sender_name'));
+		$recipient_dept 	= $this->input->post('recipient_dept');
+		$recipient_name 	= strtoupper($this->input->post('recipient_name'));
+		$fileUpload 		= '';
+
+		if ( isset($_FILES['ticket_att']['name']) ) {
+			$file = $_FILES['ticket_att']['name'];
+			$exp = explode(".", $file);
+			$end = strtolower(end($exp));
+			$fileUpload = md5($file.date("YmdHis")).".".$end;
+
+			$allowed = array("png", "jpg", "jpeg");
+
+			if ( !in_array($end, $allowed) ) {
+				$this->response['msg'] = "Invalid image extension.";
+				echo json_encode($this->response);exit;
+			}
+
+			if ( $_FILES['ticket_att']['size'] > 5000000 ){
+				$this->response['msg'] = 'Maximum image can be upload is 5 MB.';
+				echo json_encode($this->response);exit;
+			}
+
+			$this->compress_image($_FILES['ticket_att']['tmp_name'], "assets/img/outbound/".$fileUpload, 100);
+		}
+
+		$data_ticket = [
+			"category_id" 			=> $category_id,
+			"ticket_description"	=> $ticket_description,
+			"ticket_att" 			=> $fileUpload,
+			'create_by'				=> strtoupper($this->log_user),
+			'create_name'			=> strtoupper($this->log_name),
+			'create_date'			=> date('Y-m-d H:i:s'),
+		];
+
+		$ticket_id = $this->sitemodel->insert("tab_ticket", $data_ticket);
+
+		$data_tr = [
+			'ticket_id'			=> $ticket_id,
+			'status_id'			=> 1,
+			'priority_id'		=> 1,
+			'sender_dept'		=> $sender_dept,
+			'sender_name'		=> $sender_name,
+			'recipient_dept'	=> $recipient_dept,
+			'recipient_name'	=> $recipient_name,
+			'create_by'			=> strtoupper($this->log_user),
+			'create_name'		=> strtoupper($this->log_name),
+			'create_date'		=> date('Y-m-d H:i:s'),
+			'request_by'		=> '',
+		];
+
+		$tr_id = $this->sitemodel->insert("tr_ticketing", $data_tr);
+
+		$this->response['url']	 = base_url('outbound');
+		$this->response['type'] = 'done';
+		$this->response['msg'] = "Successfully add ticket.";
+
+		echo json_encode($this->response);
+		exit;
 	}
 
 	function login(){

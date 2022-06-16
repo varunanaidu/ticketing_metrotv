@@ -12,14 +12,13 @@ class Uacmodel extends CI_Model{
 
 
     /*** DATATABLE SERVER SIDE FOR OUTBOUND ***/
-    function _get_applicant_query($data=''){
-        $__order 			= array('id' => 'ASC');
-        $__column_search 	= array('id', 'nip', 'name', 'dept_name', 'level_name', 'create_date');
-        $__column_order     = array('id', 'nip', 'name', 'dept_name', 'level_name', 'create_date');
+    function _get_applicant_query(){
+        $__order 			= array('id' => 'DESC');
+        $__column_search 	= array('id', 'nip', 'name', 'dept_name', 'role_name', 'create_date');
+        $__column_order     = array('id', 'nip', 'name', 'dept_name', 'role_name', 'create_date');
 
-        $this->db->select('id, nip, name, dept_name, level_name, create_date');
-        $this->db->from('tab_admin');
-        $this->db->where('level', '1');
+        $this->db->select('*');
+        $this->db->from('vw_admin');
 
         $i = 0;
         $search_value = $this->input->post('search')['value'];
@@ -48,12 +47,8 @@ class Uacmodel extends CI_Model{
 
     }
 
-    function get_applicant($data=''){
-        if ($data != '') {
-            $this->_get_applicant_query($data);
-        }else{
-            $this->_get_applicant_query();
-        }
+    function get_applicant(){
+        $this->_get_applicant_query();
         if ($this->input->post('length') != -1) $this->db->limit($this->input->post('length'), $this->input->post('start'));
         $query = $this->db->get();
         return $query->result();
@@ -66,7 +61,7 @@ class Uacmodel extends CI_Model{
     }
 
     function get_applicant_count_all(){
-    	$this->db->from('tab_admin');
+    	$this->db->from('vw_admin');
     	return $this->db->count_all_results();
     }
 }

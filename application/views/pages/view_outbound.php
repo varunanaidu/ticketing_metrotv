@@ -3,18 +3,18 @@
 
 <!-- DataTables Example -->
 <div class="card mb-3">
-	<div class="card-header">
+	<div class="card-header-outbound">
 		<i class="fas fa-table"></i>
 	Outbound Table</div>
 	<div class="card-body">
 		<div class="table-responsive">
-			<table class="table table-bordered table-striped" id="outboundTable" width="100%" cellspacing="0">
+			<table class="table table-bordered table-striped" id="outboundTable" width="100%" cellspacing="0" style="text-align: center;">
 				<thead>
 					<tr>
 						<th>Duration</th>
 						<th>Ticket Number</th>
 						<th>Ticket Description</th>
-						<th>Requesting To</th>
+						<th>Request To</th>
 						<th>Priority</th>
 						<th>Action</th>
 					</tr>

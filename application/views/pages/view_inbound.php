@@ -7,7 +7,7 @@
   Inbound Table</div>
   <div class="card-body">
     <div class="table-responsive">
-     <table class="table table-bordered table-striped" id="inboundTable" width="100%" cellspacing="0">
+     <table class="table table-bordered table-striped" id="inboundTable" width="100%" cellspacing="0" style="text-align: center;">
       <thead>
         <tr>
           <th>Duration</th>
@@ -22,5 +22,5 @@
     </table>
   </div>
 </div>
-  <div class="card-footer small text-muted">Updated today at <?= date('h:i A') ?></div>
+<div class="card-footer small text-muted">Updated today at <?= date('h:i A') ?></div>
 </div>

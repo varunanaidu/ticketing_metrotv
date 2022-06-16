@@ -11,7 +11,8 @@
 	<meta name="description" content="">
 	<meta name="author" content="">
 
-	<title>Ticketing iDocs - Metro TV</title>
+	<title>Technical Support Maintenance Application</title>
+	<link rel="icon" href="<?php echo base_url()?>assets/img/favicon.ico" type="image/x-icon">
 
 	<!-- Custom fonts for this template-->
 	<link href="<?php echo base_url() ?>assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -23,11 +24,11 @@
 
 </head>
 
-<body class="bg-login">
+<body class="bg-dark">
 
 	<div class="container">
 		<div class="card card-login mx-auto mt-5">
-			<div class="card-header">Login</div>
+			<div class="card-header-edit">Login</div>
 			<div class="card-body">
 				<form class="col s12" method="post" id="login-form" accept-charset="UTF-8" action="<?=base_url("site/signin")?>">
 					<div class="form-group">

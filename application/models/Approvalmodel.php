@@ -1,33 +1,17 @@
 <?php defined('BASEPATH') OR exit("No direct script access allowed");
+
 class Approvalmodel extends CI_Model{
-
-
-    function find($key=""){
-        $this->db->select("*");
-        if ( empty($key) == FALSE )
-            $this->db->where("id", $key);
-        $q = $this->db->get("tab_ticket");
-        if ( $q->num_rows() == 0 )
-            return FALSE;
-        return $q->result();
-    }
-
-
     /*** DATATABLE SERVER SIDE FOR OUTBOUND ***/
-    function _get_applicant_query($data=''){
-        $log  = $this->session->userdata('idocs-itdev');
-        $dept = $log->log_dept;
+    function _get_applicant_query(){
 
-        $__order 			= array('tab_ticket.ticket_id' => 'ASC');
-        $__column_search 	= array('tab_ticket.ticket_id', 'ticket_description', 'sender', 'create_user', 'create_name', 'ticket_status', 'ticket_priority', 'request_by', 'request_solved', 'create_date');
-        $__column_order     = array('tab_ticket.ticket_id', 'ticket_description', 'sender', 'create_user', 'create_name', 'ticket_status', 'ticket_priority', 'request_by', 'request_solved', 'create_date');
+        $__order            = array('tr_id'=>'DESC');
+        $__column_search    = array('tr_id', 'ticket_id', 'ticket_description', 'sender_name', 'priority_name', 'status_name');
+        $__column_order     = array('tr_id', 'ticket_id', 'ticket_description', 'sender_name', 'priority_name', 'status_name');
 
-        $this->db->select('tab_ticket.ticket_id, ticket_description, sender, create_user, create_name, ticket_status, ticket_priority, create_date, request_by, request_solved');
-        $this->db->from('tab_ticket');
-        $this->db->join('tr_ticketing', 'tr_ticketing.ticket_id = tab_ticket.ticket_id', 'left');
-        $this->db->where('recipient', $dept);
-        $this->db->where('ticket_status', '0');
-        $this->db->or_where('request_solved', '1');
+        $this->db->select('*');
+        $this->db->from('vw_last_ticket');
+        $this->db->where('recipient_name', strtoupper($this->session->userdata(SESS)->log_dept) );
+        $this->db->where_in('status_id', [1, 3]);
 
         $i = 0;
         $search_value = $this->input->post('search')['value'];
@@ -56,12 +40,8 @@ class Approvalmodel extends CI_Model{
 
     }
 
-    function get_applicant($data=''){
-        if ($data != '') {
-            $this->_get_applicant_query($data);
-        }else{
-            $this->_get_applicant_query();
-        }
+    function get_applicant(){
+        $this->_get_applicant_query();
         if ($this->input->post('length') != -1) $this->db->limit($this->input->post('length'), $this->input->post('start'));
         $query = $this->db->get();
         return $query->result();
@@ -74,7 +54,7 @@ class Approvalmodel extends CI_Model{
     }
 
     function get_applicant_count_all(){
-    	$this->db->from('tab_ticket');
+    	$this->db->from('vw_last_ticket');
     	return $this->db->count_all_results();
     }
 }

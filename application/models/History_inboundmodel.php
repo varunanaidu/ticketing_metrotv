@@ -16,14 +16,15 @@ class History_inboundmodel extends CI_Model{
         $log  = $this->session->userdata('idocs-itdev');
         $dept = $log->log_dept;
         $__order 			= array('tab_ticket.ticket_id' => 'ASC');
-        $__column_search 	= array('tab_ticket.ticket_id', 'ticket_description', 'sender', 'recipient', 'create_date', 'solved_date', 'create_name', 'solved_by');
-        $__column_order     = array('tab_ticket.ticket_id', 'ticket_description', 'sender', 'recipient', 'create_date', 'solved_date', 'create_name', 'solved_by');
+        $__column_search 	= array('tab_ticket.ticket_id', 'ticket_description', 'ticket_status', 'sender', 'recipient', 'create_date', 'solved_date', 'create_name', 'solved_by');
+        $__column_order     = array('tab_ticket.ticket_id', 'ticket_description', 'ticket_status', 'sender', 'recipient', 'create_date', 'solved_date', 'create_name', 'solved_by');
 
-        $this->db->select('tab_ticket.ticket_id, ticket_description, sender, recipient, create_date, solved_date, create_name, solved_by');
+        $this->db->select('tab_ticket.ticket_id, ticket_description, ticket_status, sender, recipient, create_date, solved_date, create_name, solved_by');
         $this->db->from('tab_ticket');
         $this->db->join('tr_ticketing', 'tr_ticketing.ticket_id = tab_ticket.ticket_id', 'left');
-        $this->db->where('ticket_status', 2);
         $this->db->where('recipient', $dept);
+        $this->db->where('ticket_status', 2);
+        $this->db->or_where('ticket_status', 3);
 
         $i = 0;
         $search_value = $this->input->post('search')['value'];

@@ -8,28 +8,39 @@
 				</div>
 				<div class="modal-body">
 					<div class="row clearfix">
+						<div class="col-md-12 form-group">
+							<div class="wrap-input100 validate-input" data-validate = "Category is required">
+								<span class="label-input100">Category</span>
+								<select class="form-control input200" id="category_id" name="category_id">
+									<option value="">-</option>
+									<?php 
+									if ( isset($category) and $category != 0 ) {
+										foreach ($category as $c) {
+											?>
+											<option value="<?= $c->category_id ?>"><?= $c->category_name ?></option>
+											<?php 
+										}
+									}
+									?>
+								</select>
+								<span class="focus-input100"></span>
+							</div>
+						</div>
+					</div>
+					<div class="row clearfix">
 						<div class="col-md-6 form-group">
 							<div class="wrap-input200 rs1-wrap-input200 validate-input" data-validate="Department is required">
 								<span class="label-input200">From:</span>
-								<input class="input200" type="text" name="sender" placeholder="Enter your Department" value="<?=$log_dept?>">
+								<input class="input200 collapse" type="text" name="sender_dept" placeholder="Enter your Department" value="<?=$log_dept?>">
+								<input class="input200 " type="text" name="sender_name" placeholder="Enter your Department" value="<?=$log_dept_name?>" readonly>
 								<span class="focus-input200"></span>
 							</div>
 						</div>	
 						<div class="col-md-6 form-group">
 							<div class="wrap-input200 rs1-wrap-input200 validate-input" data-validate = "Department is required">
 								<span class="label-input200">To:</span>
-								<select class="input200" id="recipient" name="recipient" >
-									<option selected="">Enter Recipient's Department</option>
-									<?php 
-									if (isset($dept)) {
-									foreach ($dept as $row) {
-									 ?>
-									 <option><?=$row->DEPT_NAME?></option>
-									 <?php 
-										}	
-									} 
-									  ?>
-								</select>
+								<select class="input200" id="recipient_dept" name="recipient_dept" style="width: 300px !important;"></select>
+								<input class="input200 collapse" type="text" name="recipient_name" id="recipient_name" placeholder="Enter your Department" value="">
 								<span class="focus-input200"></span>
 							</div>	
 						</div>	
@@ -51,12 +62,11 @@
 									<label class="custom-file-label" for="customFile">Attachment Files</label>
 								</div>
 							</div>
+							<img src="" alt="" id="previewImg" style="width: 300px;">
 						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
-					<input type="hidden" name="create_user" value="<?=$log_user?>">
-					<input type="hidden" name="create_name" value="<?=$log_name?>">
 					<button type="submit" class="btn btn-primary" id="outboundBtn">
 						<span>
 							Submit
@@ -110,6 +120,7 @@
 <!-- Custom scripts for all pages-->
 <script src="<?php echo base_url(); ?>assets/js/sb-admin.min.js"></script>
 <script src="<?php echo base_url(); ?>assets/js/jquery.form.min.js"></script>
+<script src="<?php echo base_url(); ?>assets/js/moment.min.js"></script>
 <script type="text/javascript">
 	var base_url = '<?php echo base_url() ?>';
 </script>

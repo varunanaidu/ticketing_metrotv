@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Uac extends CI_Controller {
+class Uac extends MY_Controller {
 
 	function __construct(){
 		parent::__construct();
@@ -12,32 +12,14 @@ class Uac extends CI_Controller {
 	{
 		if ( !$this->hasLogin() ) redirect("site/login");
 
-		$data['header'] = 'user_access';
-		$data['breadcumb'] = 'Uac';
-		$data['js']		= [
+		$this->fragment['header'] = 'user_access';
+		$this->fragment['breadcumb'] = 'Uac';
+		$this->fragment['js']		= [
 			base_url('assets/js/pages/uac.js')
 		];
 
-		$log = $this->session->userdata('idocs-itdev');
-		$log_user = $log->log_user;
-		$check_is_admin = $this->sitemodel->view('tab_admin', '*', ['nip' => $log_user]);
-		$data['is_admin'] = ($check_is_admin != '0') ? true : false;
-		$check_is_superadmin = $this->sitemodel->view('tab_admin', '*', ['nip' => $log_user, 'level' => '2']);
-		$data['is_superadmin'] = ($check_is_superadmin != '0') ? true : false;
-
-		$this->load->library('guzzle');
-		$department = $this->guzzle->guzzle_HRIS('department/get');
-		$data_department = json_decode($department);
-		$data['dept'] = $data_department->result;
-		$employee = $this->guzzle->guzzle_HRIS('employee/get');
-		$data_employee = json_decode($employee);
-		$data['emp'] = $data_employee->data;
-		
-		$data['log_dept'] = $log->log_dept;
-		$data['log_user'] = $log->log_user;
-		$data['log_name'] = $log->log_name;
-		$data['pagename'] = 'pages/view_user_access';
-		$this->load->view('layout/main_site', $data);
+		$this->fragment['pagename'] = 'pages/view_user_access';
+		$this->load->view('layout/main_site', $this->fragment);
 	}
 
 	function view_uac()
@@ -51,7 +33,7 @@ class Uac extends CI_Controller {
 			$col[] = $row->nip;
 			$col[] = $row->name;
 			$col[] = $row->dept_name;
-			$col[] = $row->level_name;
+			$col[] = $row->role_name;
 			$col[] = '<button class="btn btn-sm btn-danger btn-delete" title="Delete" data-id="'.$row->id.'>" data-name="'.$row->name.'"><i class="fa fa-trash"></i></button>';
 			$data[] = $col;
 		}
@@ -67,36 +49,56 @@ class Uac extends CI_Controller {
 		exit;
 	}
 
-	function ajax_validation()
+	function save()
 	{
-		$msg = array();
-		if ($_POST) {
-			$nip = $this->input->post('nip');
-			$name = $this->input->post('name');
-			$dept_id = $this->input->post('dept_id');
-			$dept_name = $this->input->post('dept_name');
+		// echo json_encode($this->input->post());die;
+		/*** Check Session ***/
+		if ( !$this->hasLogin() ){$this->response['msg'] = "Session expired, Please refresh your browser.";echo json_encode($this->response);exit;}
+		/*** Check POST or GET ***/
+		if ( !$_POST ){$this->response['msg'] = "Invalid parameters.";echo json_encode($this->response);exit;}
+		// PARAMS
+		$dept_id;
+		$dept_name;
+		$nip = $this->input->post('nip');
+		$name = $this->input->post('name');
+		
+		$post = [
+			'nip' => strtoupper($nip),
+		];
+		$this->load->library('guzzle');
+		$emp = $this->guzzle->guzzle_HRIS('employee/get', $post);
+		$data_emp = json_decode($emp);
 
-			$data = array(
-				'nip'			=> $nip,
-				'name'			=> $name,
-				'dept_id'		=> $dept_id,
-				'dept_name'		=> $dept_name,
-				'level'			=> '1',
-				'level_name'	=> 'Admin '.$dept_name,
-				"create_date"	=> date("Y-m-d H:i:s")
-			);
-			$this->sitemodel->insert("tab_admin", $data);
-
-			$msg['type'] = 'done';
-			$msg['msg'] = "Successfully add ticket.";
-
-		}
-		else{
-			$msg['type'] = 'failed';
-			$msg['msg'] = 'Invalid parameter';
+		if ( $data_emp->type == "success" ) {
+			$dept_id = $data_emp->data[0]->DEPT_ID;
+			$dept_name = $data_emp->data[0]->DEPARTMENT;
 		}
 
-		echo json_encode($msg);
+		$check = $this->sitemodel->view('tab_admin', '*', ['nip'=>$nip]);
+		if ( $check ) {
+			$this->response['msg'] = 'Data already exists';
+			echo json_encode($this->response);
+			exit;
+		}
+
+		$data = [
+			'role_id'		=> 2,
+			'dept_id'		=> $dept_id,
+			'dept_name'		=> $dept_name,
+			'nip'			=> $nip,
+			'name'			=> $name,
+			'create_by'		=> $this->log_user,
+			'create_name'	=> $this->log_name,
+			'create_date'	=> date('Y-m-d H:i:s')
+		];
+
+		$uac = $this->sitemodel->insert('tab_admin', $data);
+
+		$this->response['type'] = 'done';
+		$this->response['msg'] = "Successfully add admin.";
+
+		echo json_encode($this->response);
+		exit;
 	}
 
     function ajax_remove(){

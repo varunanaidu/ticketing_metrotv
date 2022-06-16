@@ -1,32 +1,19 @@
 <?php defined('BASEPATH') OR exit("No direct script access allowed");
+
 class Inboundallmodel extends CI_Model{
 
-
-    function find($key=""){
-        $this->db->select("*");
-        if ( empty($key) == FALSE )
-            $this->db->where("id", $key);
-        $q = $this->db->get("tab_ticket");
-        if ( $q->num_rows() == 0 )
-            return FALSE;
-        return $q->result();
-    }
-
-
     /*** DATATABLE SERVER SIDE FOR OUTBOUND ***/
-    function _get_applicant_query($data=''){
+    function _get_applicant_query(){
         $log  = $this->session->userdata('idocs-itdev');
         $dept = $log->log_dept;
 
-        $__order 			= array('tab_ticket.ticket_id' => 'ASC');
-        $__column_search 	= array('tab_ticket.ticket_id', 'ticket_description', 'sender', 'create_user', 'create_name', 'ticket_status', 'ticket_priority', 'create_date');
-        $__column_order     = array('tab_ticket.ticket_id', 'ticket_description', 'sender', 'create_user', 'create_name', 'ticket_status', 'ticket_priority', 'create_date');
+        $__order 			= array('tr_id' => 'DESC');
+        $__column_search    = array('ticket_id', 'tr_id', 'ticket_description', 'recipient_dept', 'status_name', 'prirority_name', 'request_by', 'request_solved_date',  'create_date');
+        $__column_order     = array('ticket_id', 'tr_id', 'ticket_description', 'recipient_dept', 'status_name', 'prirority_name', 'request_by', 'request_solved_date',  'create_date');
 
-        $this->db->select('tab_ticket.ticket_id, ticket_description, sender, create_user, create_name, ticket_status, ticket_priority, create_date');
-        $this->db->from('tab_ticket');
-        $this->db->join('tr_ticketing', 'tr_ticketing.ticket_id = tab_ticket.ticket_id', 'left');
-        $this->db->where('ticket_status !=', '0');
-        $this->db->where('ticket_status !=', '2');
+        $this->db->select('*');
+        $this->db->from('vw_last_ticket');
+        $this->db->where_in('status_id', [2, 3, 4]);
 
         $i = 0;
         $search_value = $this->input->post('search')['value'];
@@ -55,12 +42,8 @@ class Inboundallmodel extends CI_Model{
 
     }
 
-    function get_applicant($data=''){
-        if ($data != '') {
-            $this->_get_applicant_query($data);
-        }else{
-            $this->_get_applicant_query();
-        }
+    function get_applicant(){
+        $this->_get_applicant_query();
         if ($this->input->post('length') != -1) $this->db->limit($this->input->post('length'), $this->input->post('start'));
         $query = $this->db->get();
         return $query->result();
@@ -73,7 +56,7 @@ class Inboundallmodel extends CI_Model{
     }
 
     function get_applicant_count_all(){
-    	$this->db->from('tab_ticket');
+    	$this->db->from('vw_last_ticket');
     	return $this->db->count_all_results();
     }
 }

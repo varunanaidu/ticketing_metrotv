@@ -1,9 +1,39 @@
-$(document).ready(function () {
+$(document).ready(function () {	
 
-	$('#recipient').select2();
+    $('#customFile').on('change', function() {
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#previewImg').attr('src', e.target.result);
+            }
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+	$('#recipient_dept').select2({
+		placeholder: "Type Department Name",
+		minimumInputLength: 2,
+		ajax: {
+			url: base_url + "site/get_dept",
+			dataType: "json",
+			delay: 250,
+			processResults: function (data) {
+				return {
+					results: data
+				};
+			},
+			cache: true
+		},
+		allowClear: true
+	});
+
+	$('#recipient_dept').on('select2:select', function (e) {
+		var data = e.params.data;
+		$('#recipient_name').val(data.recipient_name);
+	});
 
 	$("#outbound-form").ajaxForm({
-		url : base_url + "outbound/ajax_validation",
+		url : base_url + "site/ajax_validation",
 		dataType : "JSON",
 		beforeSubmit : function(){
 			$("#outboundBtn").html ( "Please wait..." ).removeClass("btn-primary").addClass("btn-warning").prop("disabled", true);
@@ -16,7 +46,7 @@ $(document).ready(function () {
 					type : "success"
 				}, 
 				function(){
-					window.location.reload();
+					window.location.href = data.url;
 				}
 				);
 			}

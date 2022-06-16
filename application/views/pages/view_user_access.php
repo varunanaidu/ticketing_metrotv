@@ -18,53 +18,30 @@
 						<th><i class="fas fa-cogs"></i></th>
 					</tr>
 				</thead>
-			</tbody>
-		</table>
+				<tbody></tbody>
+			</table>
+		</div>
 	</div>
-</div>
-</div>
 </div>
 
 <div id="uac-modal" class="modal fade" role="dialog" data-backdrop="static" data-keyboard="false" tabindex="-1">
-	<div class="modal-dialog modal-lg">
+	<div class="modal-dialog">
 		<div class="modal-content">
+			<form method="POST" id="uac-form" accept-charset="UTF-8">
 				<div class="modal-header">
 					<button type="button" class="close text-red" data-dismiss="modal" tabindex="-1">&times;</button>
 				</div>
 				<div class="modal-body">
 					<div class="row clearfix">
-						<div class="col-md-6 form-group">
-							<select class="form-control" id="department" name="department" required="" autofocus="" style="width: 300px !important;" >
-								<option selected="">Department</option>
-								<?php 
-								if (isset($dept)) {
-									foreach ($dept as $row) {
-										?>
-										<option><?=$row->DEPT_ID.'-'.$row->DEPT_NAME?></option>
-										<?php 
-									}	
-								} 
-								?>
-							</select>
-						</div>	
-						<div class="col-md-6 form-group">
-							<select id="user" class="form-control" name="user" required="" autofocus="" style="width: 300px !important;">
+						<div class="col-md-12 form-group">
+							<select id="nip" class="form-control" name="nip" required="" autofocus="" style="width: 400px !important;">
 								<option selected="">Name</option>
-								<?php 
-								if (isset($emp)) {
-									foreach ($emp as $row) {
-										?>
-										<option><?=$row->NIP.'-'.$row->NAME?></option>
-										<?php 
-									}	
-								} 
-								?>
 							</select>
+							<input type="text" class="collapse" name="name" id="name" >
 						</div>	
 					</div>
 				</div>
 				<div class="modal-footer">
-					<input type="hidden" name="created_id" value="<?=$log_user?>">
 					<button type="submit" class="btn btn-primary" id="uacBtn">
 						<span>
 							Submit
@@ -72,6 +49,7 @@
 						</span>
 					</button>
 				</div>
+			</form>
 		</div>
 	</div>
 </div>

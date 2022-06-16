@@ -9,7 +9,8 @@
 	<meta name="description" content="">
 	<meta name="author" content="">
 
-	<title>Ticketing iDocs - Metro TV </title>
+	<title>Technical Support Maintenance Application</title>
+	<link rel="icon" href="<?php echo base_url()?>assets/img/favicon.ico" type="image/x-icon">
 
 	<!-- Custom fonts for this template-->
 	<link href="<?php echo base_url(); ?>assets/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -28,9 +29,9 @@
 
 <body id="page-top">
 
-	<nav class="navbar navbar-expand navbar-dark bg-dark static-top">
+	<nav class="navbar navbar-expand navbar-dark bg-blue static-top">
 
-		<a class="navbar-brand mr-1" href="<?php echo base_url() ?>">Ticketing</a>
+		<a class="navbar-brand mr-1" href="<?php echo base_url() ?>">Technical Support Maintenance Application</a>
 
 		<button class="btn btn-link btn-sm text-white order-1 order-sm-0" id="sidebarToggle" href="#">
 			<i class="fas fa-bars"></i>
@@ -95,6 +96,14 @@
 					</span>
 				</a>
 			</li>
+			<li class="nav-item <?= ($header == 'solution' ? 'active' : '')?>">
+				<a class="nav-link notification" href="<?php echo base_url() ?>solution">
+					<i class="fas fa-lightbulb"></i> &nbsp;
+					<span>
+						Solution
+					</span>
+				</a>
+			</li>
 			<?php 
 			if (isset($is_admin) and $is_admin == true) {
 				?>
@@ -137,8 +146,7 @@
 
 				<ol class="breadcrumb">
 					<li class="breadcrumb-item">
-						<a href="#">iDocs</a>
+						<a href="javascript:void(0)">Main Menu</a>
 					</li>
-					<li class="breadcrumb-item active">Ticketing</li>
 					<li class="breadcrumb-item active"><?=$breadcumb?></li>
 				</ol>

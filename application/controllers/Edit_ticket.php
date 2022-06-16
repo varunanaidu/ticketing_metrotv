@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Edit_ticket extends CI_Controller {
+class Edit_ticket extends MY_Controller {
 
 	function __construct(){
 		parent::__construct();
@@ -12,120 +12,279 @@ class Edit_ticket extends CI_Controller {
 		if ( !$this->hasLogin() ) redirect("site/login");
 
 		if ($this->input->get('v')) {
-			$data['data'] = $this->sitemodel->view("tab_ticket tt", "*", ['tt.ticket_id' => $this->input->get('v')],  array("tr_ticketing trt" => "trt.ticket_id=tt.ticket_id,"));
-			$data['data_message'] = $this->sitemodel->view('tab_message', '*', ['ticket_id' => $this->input->get('v')]);
+			$this->fragment['data'] = $this->sitemodel->view("vw_ticket", "*", ['ticket_id' => $this->input->get('v')] );
+			$this->fragment['data_message'] = $this->sitemodel->view('tab_message', '*', ['ticket_id' => $this->input->get('v')]);
 		}
-
-		$log = $this->session->userdata('idocs-itdev');
-		$log_user = $log->log_user;
-		$check_is_admin = $this->sitemodel->view('tab_admin', '*', ['nip' => $log_user]);
-		$data['is_admin'] = ($check_is_admin != '0') ? true : false;
-		$check_is_superadmin = $this->sitemodel->view('tab_admin', '*', ['nip' => $log_user, 'level' => '2']);
-		$data['is_superadmin'] = ($check_is_superadmin != '0') ? true : false;
 
 
 		if ($this->input->get('page')) {
 			if ($this->input->get('page') == 'inbound') {
-				$data['header'] = 'inbound';
-				$data['breadcumb'] = 'Inbound';
+				$this->fragment['header'] = 'inbound';
+				$this->fragment['breadcumb'] = 'Inbound';
 			}else{
-				$data['header'] = 'outbound';
-				$data['breadcumb'] = 'Outbound';
+				$this->fragment['header'] = 'outbound';
+				$this->fragment['breadcumb'] = 'Outbound';
 			}
 		}
 
-		$data['js']		= [
+		$this->fragment['js']		= [
 			base_url('assets/js/pages/ticket.js')
 		];
+
+		$this->fragment['priority'] = $this->sitemodel->view('tab_priority', '*', ['priority_id !='=>'1']);
+
 		
-		$this->load->library('guzzle');
-		$department = $this->guzzle->guzzle_HRIS('department/get');
-		$data_department = json_decode($department);
-		$data['dept'] = $data_department->result;
-
-		$data['log_dept'] = $log->log_dept;
-		$data['log_user'] = $log->log_user;
-		$data['log_name'] = $log->log_name;
-		$data['pagename'] = 'pages/view_edit_ticket';
-		$this->load->view('layout/main_site', $data);
-	}
-
-	function send_responses() {
-		$data = array(
-			"ticket_id" 	 		=> $this->input->post('ticket_id'),
-			"message_sender" 		=> $this->input->post('message_sender'),
-			"message_content"		=> $this->input->post('message_content'),
-			"message_date"			=> date("Y-m-d H:i:s")
-		);
-
-		$this->sitemodel->insert("tab_message", $data);
-
-		$msg['type'] = 'done';
-		$msg['msg'] = "Successfully add response.";
-		echo json_encode($msg);
+		$this->fragment['pagename'] = 'pages/view_edit_ticket';
+		$this->load->view('layout/main_site', $this->fragment);
 	}
 
 	function submit_priority()
 	{
-		$data = array(
-			"ticket_status" 		=> '1',
-			"ticket_priority" 		=> $this->input->post('ticket_priority'),
-		);
+		// echo json_encode($this->input->post());die;
+		/*** Check Session ***/
+		if ( !$this->hasLogin() ){$this->response['msg'] = "Session expired, Please refresh your browser.";echo json_encode($this->response);exit;}
+		/*** Check POST or GET ***/
+		if ( !$_POST ){$this->response['msg'] = "Invalid parameters.";echo json_encode($this->response);exit;}
 
-		$this->sitemodel->update("tab_ticket", $data, ['ticket_id' => $this->input->post('ticket_id')]);
+		$id;
+		$tr_id = $this->input->post('tr_id');
+		$priority_id = $this->input->post('priority_id');
+		
+		$check = $this->sitemodel->view('vw_last_ticket', '*', ['tr_id'=>$tr_id]);
+		if (!$check) {$this->response['msg'] = "No data found.";echo json_encode($this->response);exit;}
 
-		$msg['type'] = 'done';
-		$msg['msg'] = "Successfully Update Priority.";
-		echo json_encode($msg);
+		foreach ($check as $row) {
+			
+			$data = array(
+				"ticket_id" 		=> $row->ticket_id,
+				"status_id" 		=> 2,
+				"priority_id" 		=> $priority_id,
+				"sender_dept"		=> $row->sender_dept,
+				"sender_name"		=> $row->sender_name,
+				"recipient_dept"	=> $row->recipient_dept,
+				"recipient_name"	=> $row->recipient_name,
+				"create_by"			=> $this->log_user,
+				"create_name"		=> $this->log_name,
+				"create_date"		=> date('Y-m-d H:i:s'),
+				"request"			=> '',
+				"request_by"		=> '',
+			);
+			
+			$id = $this->sitemodel->insert("tr_ticketing", $data);
+		}
+
+		$this->response['type'] = 'done';
+		$this->response['msg'] = "Successfully Update Priority.";
+		$this->response['url'] = base_url() . 'inbound/detail/' . $id;
+		echo json_encode($this->response);
+	}
+
+	function send_responses() {
+
+		// echo json_encode($this->input->post());die;
+		/*** Check Session ***/
+		if ( !$this->hasLogin() ){$this->response['msg'] = "Session expired, Please refresh your browser.";echo json_encode($this->response);exit;}
+		/*** Check POST or GET ***/
+		if ( !$_POST ){$this->response['msg'] = "Invalid parameters.";echo json_encode($this->response);exit;}
+
+		$tr_id = $this->input->post('tr_id');
+		
+		$check = $this->sitemodel->view('vw_last_ticket', '*', ['tr_id'=>$tr_id]);
+		if (!$check) {$this->response['msg'] = "No data found.";echo json_encode($this->response);exit;}
+
+		foreach ($check as $row) {
+			$data = array(
+				"ticket_id" 	 		=> $row->ticket_id,
+				"message_sender" 		=> $this->log_name,
+				"message_content"		=> $this->input->post('message_content'),
+				"message_date"			=> date("Y-m-d H:i:s")
+			);
+
+			$this->sitemodel->insert("tab_message", $data);
+		}
+
+		$this->response['type'] = 'done';
+		$this->response['msg'] = "Successfully add response.";
+		echo json_encode($this->response);
+		exit;
 	}
 
 	function request_solved()
 	{
-		$data = array(
-			"ticket_id" 	 		=> $this->input->post('ticket_id'),
-			"request_solved" 		=> '1',
-			"request_by"			=> $this->input->post('request_by')
-		);
+		// echo json_encode($this->input->post());die;
+		/*** Check Session ***/
+		if ( !$this->hasLogin() ){$this->response['msg'] = "Session expired, Please refresh your browser.";echo json_encode($this->response);exit;}
+		/*** Check POST or GET ***/
+		if ( !$_POST ){$this->response['msg'] = "Invalid parameters.";echo json_encode($this->response);exit;}
+		$id;
+		$tr_id = $this->input->post('tr_id');
+		
+		$check = $this->sitemodel->view('vw_last_ticket', '*', ['tr_id'=>$tr_id]);
+		if (!$check) {$this->response['msg'] = "No data found.";echo json_encode($this->response);exit;}
 
-		$this->sitemodel->update("tr_ticketing", $data, ['report_id' => $this->input->post('report_id')]);
+		foreach ($check as $row) {
+			
+			$data = array(
+				"ticket_id" 			=> $row->ticket_id,
+				"status_id" 			=> 3,
+				"priority_id" 			=> $row->priority_id,
+				"sender_dept"			=> $row->sender_dept,
+				"sender_name"			=> $row->sender_name,
+				"recipient_dept"		=> $row->recipient_dept,
+				"recipient_name"		=> $row->recipient_name,
+				"create_by"				=> $this->log_user,
+				"create_name"			=> $this->log_name,
+				"create_date"			=> date('Y-m-d H:i:s'),
+				"request"				=> $this->log_user,
+				"request_by"			=> $this->log_name,
+				"request_solved_date"	=> date('Y-m-d H:i:s'),
+			);
+			
+			$id = $this->sitemodel->insert("tr_ticketing", $data);
+		}
 
-		$msg['type'] = 'done';
-		$msg['msg'] = "Successfully Request.";
-		echo json_encode($msg);
+		$this->response['type'] = 'done';
+		$this->response['msg'] = "Successfully Request Close Ticket.";
+		$this->response['url'] = base_url() . 'inbound/detail/' . $id;
+		echo json_encode($this->response);
 	}
 
 	function send_close()
 	{
-		$data = array(
-			"ticket_id"				=> $this->input->post('ticket_id'),
-			"request_solved"		=> '2',
-			"request_solved_date"	=> date("Y-m-d H:i:s")
-		);
+		// echo json_encode($this->input->post());die;
+		/*** Check Session ***/
+		if ( !$this->hasLogin() ){$this->response['msg'] = "Session expired, Please refresh your browser.";echo json_encode($this->response);exit;}
+		/*** Check POST or GET ***/
+		if ( !$_POST ){$this->response['msg'] = "Invalid parameters.";echo json_encode($this->response);exit;}
+		$id;
+		$solution_desc = $this->input->post('solution_desc');
+		$tr_id = $this->input->post('tr_id_2');
+		
+		$check = $this->sitemodel->view('vw_last_ticket', '*', ['tr_id'=>$tr_id]);
+		if (!$check) {$this->response['msg'] = "No data found.";echo json_encode($this->response);exit;}
 
-		$this->sitemodel->update("tr_ticketing", $data, ['report_id' => $this->input->post('report_id')]);
+		foreach ($check as $row) {
+			
+			$data = array(
+				"ticket_id" 			=> $row->ticket_id,
+				"status_id" 			=> 4,
+				"priority_id" 			=> $row->priority_id,
+				"sender_dept"			=> $row->sender_dept,
+				"sender_name"			=> $row->sender_name,
+				"recipient_dept"		=> $row->recipient_dept,
+				"recipient_name"		=> $row->recipient_name,
+				"create_by"				=> $this->log_user,
+				"create_name"			=> $this->log_name,
+				"create_date"			=> date('Y-m-d H:i:s'),
+				"request"				=> $row->request,
+				"request_by"			=> $row->request_by,
+				"request_solved_date"	=> $row->request_solved_date,
+			);
+			
+			$id = $this->sitemodel->insert("tr_ticketing", $data);
 
-		$msg['type'] = 'done';
-		$msg['msg'] = "Successfully Request.";
-		echo json_encode($msg);
+			$data_solution = [
+				'ticket_id'		=> $row->ticket_id,
+				'solution_desc'	=> $solution_desc,
+				"create_by"		=> $this->log_user,
+				"create_name"	=> $this->log_name,
+				"create_date"	=> date('Y-m-d H:i:s'),
+			];
+
+			$solution = $this->sitemodel->insert("tab_solution", $data_solution);
+		}
+
+		$this->response['type'] = 'done';
+		$this->response['msg'] = "Successfully Send Ticket.";
+		$this->response['url'] = base_url() . 'inbound/detail/' . $id;
+		echo json_encode($this->response);
 	}
 
 	function solve_ticket()
 	{
-		$data = array(
-			"solved_by"			=> $this->input->post('request_by'),
-			"solved_date"		=> date("Y-m-d H:i:s")
-		);
+		// echo json_encode($this->input->post());die;
+		/*** Check Session ***/
+		if ( !$this->hasLogin() ){$this->response['msg'] = "Session expired, Please refresh your browser.";echo json_encode($this->response);exit;}
+		/*** Check POST or GET ***/
+		if ( !$_POST ){$this->response['msg'] = "Invalid parameters.";echo json_encode($this->response);exit;}
+		$id;
+		$tr_id = $this->input->post('tr_id');
+		
+		$check = $this->sitemodel->view('vw_last_ticket', '*', ['tr_id'=>$tr_id]);
+		if (!$check) {$this->response['msg'] = "No data found.";echo json_encode($this->response);exit;}
 
-		$this->sitemodel->update("tr_ticketing", $data, ['report_id' => $this->input->post('report_id')]);
+		foreach ($check as $row) {
+			
+			$data = array(
+				"ticket_id" 			=> $row->ticket_id,
+				"status_id" 			=> 5,
+				"priority_id" 			=> $row->priority_id,
+				"sender_dept"			=> $row->sender_dept,
+				"sender_name"			=> $row->sender_name,
+				"recipient_dept"		=> $row->recipient_dept,
+				"recipient_name"		=> $row->recipient_name,
+				"create_by"				=> $this->log_user,
+				"create_name"			=> $this->log_name,
+				"create_date"			=> date('Y-m-d H:i:s'),
+				"request"				=> $row->request,
+				"request_by"			=> $row->request_by,
+				"request_solved_date"	=> $row->request_solved_date,
+				"solved"				=> $row->request,
+				"solved_by"				=> $row->request_by,
+				"solved_date"			=> $row->request_solved_date,
+			);
+			
+			$id = $this->sitemodel->insert("tr_ticketing", $data);
+		}
 
-		$data2 = array(
-			"ticket_status"	=> '2'
-		);
 
-		$this->sitemodel->update("tab_ticket", $data2, ['ticket_id' => $this->input->post('ticket_id')]);
+		$this->response['type'] = 'done';
+		$this->response['msg'] = "Ticket has been solved.";
+		$this->response['url'] = base_url() . 'outbound/history_outbound';
+		echo json_encode($this->response);
+	}
 
-		$msg['type'] = 'done';
-		$msg['msg'] = "Successfully Request.";
-		echo json_encode($msg);
+	function reject_ticket(){
+		// echo json_encode($this->input->post());die;
+		/*** Check Session ***/
+		if ( !$this->hasLogin() ){$this->response['msg'] = "Session expired, Please refresh your browser.";echo json_encode($this->response);exit;}
+		/*** Check POST or GET ***/
+		if ( !$_POST ){$this->response['msg'] = "Invalid parameters.";echo json_encode($this->response);exit;}
+		$id;
+		$tr_id 				= $this->input->post('tr_id');
+		$reason_rejected 	= $this->input->post('reason_rejected');
+		
+		$check = $this->sitemodel->view('vw_last_ticket', '*', ['tr_id'=>$tr_id]);
+		if (!$check) {$this->response['msg'] = "No data found.";echo json_encode($this->response);exit;}
+
+		foreach ($check as $row) {
+			
+			$data = array(
+				"ticket_id" 			=> $row->ticket_id,
+				"status_id" 			=> 6,
+				"priority_id" 			=> $row->priority_id,
+				"sender_dept"			=> $row->sender_dept,
+				"sender_name"			=> $row->sender_name,
+				"recipient_dept"		=> $row->recipient_dept,
+				"recipient_name"		=> $row->recipient_name,
+				"create_by"				=> $this->log_user,
+				"create_name"			=> $this->log_name,
+				"create_date"			=> date('Y-m-d H:i:s'),
+				"request"				=> $row->request,
+				"request_by"			=> $row->request_by,
+				"request_solved_date"	=> $row->request_solved_date,
+				"solved"				=> $row->request,
+				"solved_by"				=> $row->request_by,
+				"solved_date"			=> $row->request_solved_date,
+				"reason_rejected"		=> $reason_rejected,
+			);
+			
+			$id = $this->sitemodel->insert("tr_ticketing", $data);
+		}
+
+		$this->response['type'] = 'done';
+		$this->response['msg'] = "Ticket has been rejected.";
+		$this->response['url'] = base_url() . 'inbound/history_inbound';
+		echo json_encode($this->response);
 	}
 }

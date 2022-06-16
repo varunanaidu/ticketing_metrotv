@@ -4907,6 +4907,8 @@ input[type="button"].btn-block {
   padding: 1.25rem;
   border: 1px solid rgba(0, 0, 0, 0.125);
   border-radius: 0.25rem;
+  background-color: #82b7e8;
+  color: #fff;
 }
 
 .card-response {
@@ -4916,6 +4918,8 @@ input[type="button"].btn-block {
   padding: 1.25rem;
   border: 1px solid rgba(0, 0, 0, 0.125);
   border-radius: 0.25rem;
+  background-color: #86BB71;
+  color: #fff;
 }
 
 .card-title {
@@ -7019,7 +7023,7 @@ button.bg-light:focus {
 }
 
 .bg-dark {
-  background-color: #343a40 !important;
+  background-color: #083d71 !important;
 }
 
 .bg-login {
@@ -15883,9 +15887,60 @@ input[type="button"].btn-block {
 
 .card-header:first-child {
   border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
+  background-color: #82b7e8;
+  color: #fff;
 }
 
 .card-header + .list-group .list-group-item:first-child {
+  border-top: 0;
+}
+
+.card-header-outbound {
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 0;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header-outbound:first-child {
+  border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
+  background-color: #86BB71;
+  color: #fff;
+}
+
+.card-header-outbound + .list-group .list-group-item:first-child {
+  border-top: 0;
+}
+
+.card-header-approval {
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 0;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header-approval:first-child {
+  border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
+  background-color: #ebb77f;
+  color: #fff;
+}
+
+.card-header-approval + .list-group .list-group-item:first-child {
+  border-top: 0;
+}
+
+.card-header-edit {
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 0;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header-edit:first-child {
+  border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
+}
+
+.card-header-edit + .list-group .list-group-item:first-child {
   border-top: 0;
 }
 
@@ -17936,8 +17991,15 @@ button.bg-light:focus {
   background-color: #dae0e5 !important;
 }
 
+.bg-blue {
+  background-color: #0D47A1 !important;
+}
+
 .bg-dark {
-  background-color: #343a40 !important;
+  background-image: url("../../assets/img/wp.jpeg") !important;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 a.bg-dark:hover, a.bg-dark:focus,

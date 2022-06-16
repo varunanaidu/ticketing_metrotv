@@ -1,6 +1,26 @@
 $(document).ready(function () {
 
-	$('#user, #department').select2();
+	$("#nip").select2({
+		placeholder: "Type NIP or Name",
+		minimumInputLength: 2,
+		ajax: {
+			url: base_url + "site/search_emp",
+			dataType: "json",
+			delay: 250,
+			processResults: function (data) {
+				return {
+					results: data
+				};
+			},
+			cache: true
+		},
+		allowClear: true
+	});
+
+	$('#nip').on('select2:select', function (e) {
+		var data = e.params.data;
+		$('#name').val(data.emp_name);
+	});
 
 	var t = $('#uacTable').DataTable({
 		"processing" : true,
@@ -15,62 +35,32 @@ $(document).ready(function () {
 		},
 		"searchDelay" : 750,
 	});
-	
-	$('#uacBtn').click(function(e) {
-		e.preventDefault();
-		var tempDept = $('#department').val();
-		var dept = tempDept.split('-');
-		var dept_id = dept[0];
-		var dept_name = dept[1];
 
-		var tempEmp = $('#user').val();
-		var user = tempEmp.split('-');
-		var nip = user[0];
-		var name = user[1];
-
-		var data = {
-			'nip' : nip,
-			'name': name,
-			'dept_id' : dept_id,
-			'dept_name' : dept_name
-		};
-
-		if (!tempDept || !tempEmp) {
-			alert('Both Data Required');
-		}else{
-			$.ajax({
-				url : base_url + 'uac/ajax_validation',
-				type : 'POST',
-				dataType : 'JSON',
-				data : data,
-				success : function (data) {
-					if ( data.type == 'done' ){
-						swal({
-							title : "Success!", 
-							text : data.msg, 
-							type : "success"
-						}, 
-						function(){
-							window.location.reload();
-						}
-						);
-					}
-					else{
-						swal({
-							title : "Error!", 
-							text : data.msg, 
-							type : "error"
-						}, 
-						function(){
-							swal.close();
-							$("#outboundBtn").html ( "SAVE CHANGES" ).removeClass("btn-warning").addClass("btn-primary").prop("disabled", false);
-						}
-						);
-					}
-				}
-			});
-		}
-
+	$('#uac-form').on('submit', function(event) {
+		event.preventDefault();
+		
+		$.ajax({
+			url : base_url + 'uac/save',
+			type : 'POST',
+			dataType : 'JSON',
+			data : $(this).serialize(),
+			beforeSend : function () {
+				$('#uacBtn').removeClass('btn-primary').addClass('btn-warning').prop('disabled', true);
+			},
+			success : function (data) {
+				var sa_title = (data.type == 'done') ? "Success!" : "Failed!";
+				var sa_type = (data.type == 'done') ? "success" : "warning";
+				swal({ title:sa_title, type:sa_type, text:data.msg },function(){ 
+					if (data.type == 'done') window.location.reload(); 
+				});
+			},
+			error: function(){
+				swal ( "Failed!", "Error Occurred, Please refresh your browser.", "error" );
+			},
+			complete: function(){
+				$('#uacBtn').removeClass('btn-warning').addClass('btn-primary').prop('disabled', false);
+			}
+		});
 	});
 
 	t.on("click", ".btn-delete", function(){
